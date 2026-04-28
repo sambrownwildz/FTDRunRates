@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FTD Targets Dashboard — May to December 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #1F3864;
+    --navy-light: #2E5BA8;
+    --teal: #2A9D8F;
+    --teal-light: #5DBDB1;
+    --coral: #E76F51;
+    --coral-light: #F2A088;
+    --gold: #C9A94B;
+    --bg: #F4F6F8;
+    --card: #FFFFFF;
+    --text: #2D3748;
+    --muted: #718096;
+    --border: #E2E8F0;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: white;
+    padding: 32px 36px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .header .subtitle {
+    font-size: 14px;
+    opacity: 0.85;
+    font-weight: 400;
+  }
+  .header-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header-right {
+    text-align: right;
+    font-size: 13px;
+    opacity: 0.85;
+  }
+
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--card);
+    padding: 22px 24px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--navy);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+  }
+  .kpi-card.teal { border-top-color: var(--teal); }
+  .kpi-card.coral { border-top-color: var(--coral); }
+  .kpi-card.gold { border-top-color: var(--gold); }
+
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--navy);
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .kpi-card.teal .kpi-value { color: var(--teal); }
+  .kpi-card.coral .kpi-value { color: var(--coral); }
+  .kpi-card.gold .kpi-value { color: var(--gold); }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Section title */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 8px 4px 12px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 24px 28px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 320px;
+  }
+  .chart-wrap.tall { height: 380px; }
+  .chart-wrap.short { height: 240px; }
+
+  /* === COMPONENT BREAKDOWN === */
+  .component-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 28px 32px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .component-stack {
+    display: flex;
+    height: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 16px 0 24px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .component-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    transition: filter 0.15s ease;
+    cursor: default;
+  }
+  .component-segment:hover { filter: brightness(1.1); }
+
+  .component-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .component-tile {
+    padding: 16px 18px;
+    border-radius: 10px;
+    background: var(--bg);
+    border-left: 4px solid var(--navy);
+  }
+  .component-tile .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .component-tile .value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.1;
+    margin-bottom: 2px;
+  }
+  .component-tile .pct {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .component-tile.fin-real { border-left-color: var(--teal); }
+  .component-tile.fin-real .value { color: var(--teal); }
+  .component-tile.fin-xsell { border-left-color: var(--teal-light); }
+  .component-tile.fin-xsell .value { color: var(--teal-light); }
+  .component-tile.row-real { border-left-color: var(--coral); }
+  .component-tile.row-real .value { color: var(--coral); }
+  .component-tile.row-xsell { border-left-color: var(--coral-light); }
+  .component-tile.row-xsell .value { color: var(--coral-light); }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .chart-grid.full {
+    grid-template-columns: 1fr;
+  }
+
+  /* May path — milestone callouts */
+  .milestone-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .milestone {
+    text-align: center;
+    padding: 14px 8px;
+    background: var(--bg);
+    border-radius: 8px;
+    border-top: 3px solid var(--navy);
+  }
+  .milestone .label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .milestone .value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.1;
+  }
+  .milestone .sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Insights */
+  .insights {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 28px 32px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .insights h2 {
+    font-size: 16px;
+    color: var(--navy);
+    margin-bottom: 18px;
+    font-weight: 600;
+  }
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .insight {
+    padding: 16px 18px;
+    background: var(--bg);
+    border-radius: 8px;
+    border-left: 3px solid var(--navy);
+  }
+  .insight.teal { border-left-color: var(--teal); }
+  .insight.coral { border-left-color: var(--coral); }
+  .insight.gold { border-left-color: var(--gold); }
+  .insight h3 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .insight p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 20px;
+  }
+  .footer a {
+    color: var(--navy);
+    text-decoration: none;
+  }
+  .footer a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 900px) {
+    .kpi-strip, .chart-grid, .insight-grid, .component-tiles, .milestone-row {
+      grid-template-columns: 1fr 1fr;
+    }
+    .header h1 { font-size: 22px; }
+  }
+  @media (max-width: 560px) {
+    .kpi-strip, .chart-grid, .insight-grid, .component-tiles, .milestone-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-meta">
+    <div>
+      <h1>FTD Targets Dashboard</h1>
+      <div class="subtitle">May 2026 – December 2026 · Wildz</div>
+    </div>
+    <div class="header-right">
+      <div>Owner: Sampa</div>
+      <div>Updated: 28 April 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI STRIP — May 2026 focus -->
+<div class="kpi-strip">
+  <div class="kpi-card gold">
+    <div class="kpi-label">May Target</div>
+    <div class="kpi-value">19,850</div>
+    <div class="kpi-sub">Total FTDs · current month</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Daily Average Needed</div>
+    <div class="kpi-value">640</div>
+    <div class="kpi-sub">19,850 ÷ 31 days</div>
+  </div>
+  <div class="kpi-card teal">
+    <div class="kpi-label">Finland Share (May)</div>
+    <div class="kpi-value">76.0%</div>
+    <div class="kpi-sub">15,080 of 19,850 FTDs</div>
+  </div>
+  <div class="kpi-card coral">
+    <div class="kpi-label">Cross-Sell Share (May)</div>
+    <div class="kpi-value">55.4%</div>
+    <div class="kpi-sub">11,000 of 19,850 FTDs</div>
+  </div>
+</div>
+
+<!-- ============================== -->
+<!-- SECTION 1: COMPONENT BREAKDOWN -->
+<!-- ============================== -->
+<div class="section-title">1 · The components of May's target</div>
+<div class="component-card">
+  <div class="card-title">What makes up May's 19,850 FTD target</div>
+  <div class="card-subtitle">Each segment is sized by its share of the May plan. Finland (teal) carries 76% of the month; cross-sell (lighter shades) is the larger half of each region.</div>
+
+  <!-- Visual: full-width stacked bar -->
+  <div class="component-stack" id="componentStack"></div>
+
+  <!-- Tiles below for absolute numbers (May 2026) -->
+  <div class="component-tiles">
+    <div class="component-tile fin-xsell">
+      <div class="label">Finland Cross-Sell</div>
+      <div class="value">8,000</div>
+      <div class="pct" style="color: var(--teal-light);">40.3% of May</div>
+    </div>
+    <div class="component-tile fin-real">
+      <div class="label">Finland Real</div>
+      <div class="value">7,080</div>
+      <div class="pct" style="color: var(--teal);">35.7% of May</div>
+    </div>
+    <div class="component-tile row-xsell">
+      <div class="label">ROW Cross-Sell</div>
+      <div class="value">3,000</div>
+      <div class="pct" style="color: var(--coral-light);">15.1% of May</div>
+    </div>
+    <div class="component-tile row-real">
+      <div class="label">ROW Real</div>
+      <div class="value">1,770</div>
+      <div class="pct" style="color: var(--coral);">8.9% of May</div>
+    </div>
+  </div>
+</div>
+
+<!-- Two charts: monthly component shape + monthly geo total -->
+<div class="chart-grid">
+  <div class="card">
+    <div class="card-title">How the components stack each month</div>
+    <div class="card-subtitle">All four components stacked. Finland XSell (lightest teal) dominates and grows in winter.</div>
+    <div class="chart-wrap"><canvas id="componentMonthlyChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Real vs Cross-Sell mix by month</div>
+    <div class="card-subtitle">Cross-sell carries 52.5% of the year; some months tilt much further (Dec is 66% XSell).</div>
+    <div class="chart-wrap"><canvas id="mixChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ============================ -->
+<!-- SECTION 2: MAY DAILY PATH    -->
+<!-- ============================ -->
+<div class="section-title">2 · The path to 19,850 in May</div>
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-title">Cumulative path to 19,850 in May</div>
+  <div class="card-subtitle">Navy line + shaded area = the running total you need to hit each day (primary axis, left). Muted bars in the background = the daily target underneath the curve (secondary axis, right).</div>
+  <div class="chart-wrap tall"><canvas id="mayDailyChart"></canvas></div>
+
+  <div class="milestone-row">
+    <div class="milestone"><div class="label">End of Week 1</div><div class="value">4,489</div><div class="sub">22.6% of month · by 7 May</div></div>
+    <div class="milestone"><div class="label">End of Week 2</div><div class="value">8,978</div><div class="sub">45.2% · by 14 May</div></div>
+    <div class="milestone"><div class="label">End of Week 3</div><div class="value">13,467</div><div class="sub">67.8% · by 21 May</div></div>
+    <div class="milestone"><div class="label">End of Week 4</div><div class="value">17,956</div><div class="sub">90.5% · by 28 May</div></div>
+    <div class="milestone"><div class="label">End of May</div><div class="value">19,850</div><div class="sub">100% · by 31 May</div></div>
+  </div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="insights">
+  <h2>What this dashboard tells you</h2>
+  <div class="insight-grid">
+    <div class="insight teal">
+      <h3>Finland is the engine — 77% of the year</h3>
+      <p>Finland XSell alone (38.8%) is bigger than all of ROW combined (22.9%). If Finnish cross-sell stalls, no plan elsewhere can compensate.</p>
+    </div>
+    <div class="insight gold">
+      <h3>The June spike needs scrutiny</h3>
+      <p>26,000 FTDs is 31% above the rest-of-year average. A target that big needs an explicit campaign or product launch behind it — not a wish.</p>
+    </div>
+    <div class="insight coral">
+      <h3>ROW Real is the most fragile component</h3>
+      <p>At 9.3% it's the smallest piece — but it's also the one trending down sharply in Q1. Worth asking: is this market exit, attribution, or genuine decline?</p>
+    </div>
+    <div class="insight">
+      <h3>The May path is back-loaded around Fridays</h3>
+      <p>Hitting Week 1 (4,489 by 7 May) requires landing the first Friday at 798. Miss it and Week 2 carries the recovery — but with one fewer Friday left to play with.</p>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Source: <a href="https://docs.google.com/spreadsheets/d/1ueQFJ_YqUPq8flWDR3BF7pPqPcyzOevZzESGl4cQopU/edit">FTD Targets Tracker</a>
+  · Generated 28 April 2026 · Self-contained HTML — drop into any GitHub Pages repo
+</div>
+
+<script>
+  // === DATA ===
+  const monthly = [
+    { month: 'May-26', fiReal: 7080,  fiXSell: 8000,  rowReal: 1770, rowXSell: 3000, total: 19850 },
+    { month: 'Jun-26', fiReal: 10000, fiXSell: 10000, rowReal: 2000, rowXSell: 4000, total: 26000 },
+    { month: 'Jul-26', fiReal: 9000,  fiXSell: 9000,  rowReal: 2250, rowXSell: 3000, total: 23250 },
+    { month: 'Aug-26', fiReal: 7000,  fiXSell: 7000,  rowReal: 1750, rowXSell: 3003, total: 18753 },
+    { month: 'Sep-26', fiReal: 8000,  fiXSell: 7000,  rowReal: 2000, rowXSell: 2548, total: 19548 },
+    { month: 'Oct-26', fiReal: 7500,  fiXSell: 7500,  rowReal: 1875, rowXSell: 2657, total: 19532 },
+    { month: 'Nov-26', fiReal: 7500,  fiXSell: 8000,  rowReal: 1875, rowXSell: 2013, total: 19388 },
+    { month: 'Dec-26', fiReal: 7500,  fiXSell: 8000,  rowReal: 1875, rowXSell: 2397, total: 19772 },
+  ];
+
+  const mayDaily = [
+    { d: '2026-05-01', dow: 1.2466, ft: 798 }, { d: '2026-05-02', dow: 0.9739, ft: 624 },
+    { d: '2026-05-03', dow: 0.8092, ft: 518 }, { d: '2026-05-04', dow: 0.8601, ft: 551 },
+    { d: '2026-05-05', dow: 1.0400, ft: 666 }, { d: '2026-05-06', dow: 1.0356, ft: 663 },
+    { d: '2026-05-07', dow: 1.0446, ft: 669 }, { d: '2026-05-08', dow: 1.2466, ft: 798 },
+    { d: '2026-05-09', dow: 0.9739, ft: 624 }, { d: '2026-05-10', dow: 0.8092, ft: 518 },
+    { d: '2026-05-11', dow: 0.8601, ft: 551 }, { d: '2026-05-12', dow: 1.0400, ft: 666 },
+    { d: '2026-05-13', dow: 1.0356, ft: 663 }, { d: '2026-05-14', dow: 1.0446, ft: 669 },
+    { d: '2026-05-15', dow: 1.2466, ft: 798 }, { d: '2026-05-16', dow: 0.9739, ft: 624 },
+    { d: '2026-05-17', dow: 0.8092, ft: 518 }, { d: '2026-05-18', dow: 0.8601, ft: 551 },
+    { d: '2026-05-19', dow: 1.0400, ft: 666 }, { d: '2026-05-20', dow: 1.0356, ft: 663 },
+    { d: '2026-05-21', dow: 1.0446, ft: 669 }, { d: '2026-05-22', dow: 1.2466, ft: 798 },
+    { d: '2026-05-23', dow: 0.9739, ft: 624 }, { d: '2026-05-24', dow: 0.8092, ft: 518 },
+    { d: '2026-05-25', dow: 0.8601, ft: 551 }, { d: '2026-05-26', dow: 1.0400, ft: 666 },
+    { d: '2026-05-27', dow: 1.0356, ft: 663 }, { d: '2026-05-28', dow: 1.0446, ft: 669 },
+    { d: '2026-05-29', dow: 1.2466, ft: 798 }, { d: '2026-05-30', dow: 0.9739, ft: 624 },
+    { d: '2026-05-31', dow: 0.8092, ft: 518 },
+  ];
+
+  const dowFactors = {
+    Monday: 0.8601, Tuesday: 1.0400, Wednesday: 1.0356, Thursday: 1.0446,
+    Friday: 1.2466, Saturday: 0.9739, Sunday: 0.8092
+  };
+
+  // Component values for the *current month* (May 2026)
+  const MAY_TARGET = 19850;
+  const MAY_FIN_REAL  = 7080;
+  const MAY_FIN_XSELL = 8000;
+  const MAY_ROW_REAL  = 1770;
+  const MAY_ROW_XSELL = 3000;
+
+  // Helper
+  const fmt = n => n.toLocaleString('en-MT');
+
+  // === Component stacked bar (HTML, not Chart.js) — May 2026 ===
+  const stack = document.getElementById('componentStack');
+  const segments = [
+    { label: 'Finland XSell', value: MAY_FIN_XSELL, color: 'var(--teal-light)' },
+    { label: 'Finland Real',  value: MAY_FIN_REAL,  color: 'var(--teal)' },
+    { label: 'ROW XSell',     value: MAY_ROW_XSELL, color: 'var(--coral-light)' },
+    { label: 'ROW Real',      value: MAY_ROW_REAL,  color: 'var(--coral)' }
+  ];
+  segments.forEach(seg => {
+    const w = (seg.value / MAY_TARGET) * 100;
+    const div = document.createElement('div');
+    div.className = 'component-segment';
+    div.style.flex = `0 0 ${w}%`;
+    div.style.background = seg.color;
+    div.title = `${seg.label}: ${fmt(seg.value)} FTDs (${w.toFixed(1)}%)`;
+    div.textContent = w >= 12 ? `${w.toFixed(1)}%` : '';
+    stack.appendChild(div);
+  });
+
+  // === Common chart settings ===
+  Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif';
+  Chart.defaults.color = '#718096';
+  Chart.defaults.font.size = 12;
+
+  const NAVY = '#1F3864';
+  const TEAL = '#2A9D8F';
+  const TEAL_LIGHT = '#5DBDB1';
+  const CORAL = '#E76F51';
+  const CORAL_LIGHT = '#F2A088';
+  const GOLD = '#C9A94B';
+
+  // Plugin: draw the stacked-column TOTAL above each bar
+  const stackedTotalLabel = {
+    id: 'stackedTotalLabel',
+    afterDatasetsDraw(chart) {
+      const { ctx, data, scales: { x, y } } = chart;
+      ctx.save();
+      ctx.font = '700 12px -apple-system, "Segoe UI", Inter, Roboto, sans-serif';
+      ctx.fillStyle = NAVY;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      const n = data.labels.length;
+      for (let i = 0; i < n; i++) {
+        let total = 0;
+        data.datasets.forEach(ds => total += (ds.data[i] || 0));
+        const xPos = x.getPixelForValue(i);
+        const yPos = y.getPixelForValue(total) - 6;
+        ctx.fillText(fmt(total), xPos, yPos);
+      }
+      ctx.restore();
+    }
+  };
+
+  // === Chart 1: Monthly stacked - all 4 components ===
+  new Chart(document.getElementById('componentMonthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: monthly.map(m => m.month),
+      datasets: [
+        { label: 'Finland XSell', data: monthly.map(m => m.fiXSell), backgroundColor: TEAL_LIGHT, borderRadius: 0 },
+        { label: 'Finland Real',  data: monthly.map(m => m.fiReal),  backgroundColor: TEAL, borderRadius: 0 },
+        { label: 'ROW XSell',     data: monthly.map(m => m.rowXSell), backgroundColor: CORAL_LIGHT, borderRadius: 0 },
+        { label: 'ROW Real',      data: monthly.map(m => m.rowReal),  backgroundColor: CORAL, borderRadius: { topLeft: 4, topRight: 4 } }
+      ]
+    },
+    plugins: [stackedTotalLabel],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 8 } },
+        tooltip: {
+          callbacks: { footer: items => 'Total: ' + fmt(items.reduce((a,i) => a + i.parsed.y, 0)) }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, grid: { color: '#E2E8F0' }, ticks: { callback: v => fmt(v) } }
+      }
+    }
+  });
+
+  // === Chart 2: Real vs XSell stacked ===
+  new Chart(document.getElementById('mixChart'), {
+    type: 'bar',
+    data: {
+      labels: monthly.map(m => m.month),
+      datasets: [
+        { label: 'Real FTD',       data: monthly.map(m => m.fiReal + m.rowReal),  backgroundColor: NAVY },
+        { label: 'Cross-Sell FTD', data: monthly.map(m => m.fiXSell + m.rowXSell), backgroundColor: GOLD }
+      ]
+    },
+    plugins: [stackedTotalLabel],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'rectRounded' } },
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, grid: { color: '#E2E8F0' }, ticks: { callback: v => fmt(v) } }
+      }
+    }
+  });
+
+  // === Chart 3: May daily — bar (daily) + line (cumulative) ===
+  let cumulative = 0;
+  const cumData = mayDaily.map(d => { cumulative += d.ft; return cumulative; });
+  const dayLabels = mayDaily.map(d => d.d.slice(8));
+  const dayWeekdays = mayDaily.map(d => new Date(d.d).toLocaleDateString('en-US', { weekday: 'short' }));
+  const barColors = mayDaily.map(d => {
+    const wd = new Date(d.d).getDay();
+    if (wd === 5) return GOLD;
+    if (wd === 0 || wd === 6) return CORAL_LIGHT;
+    return TEAL;
+  });
+
+  // Muted bar colours so the cumulative line is the hero
+  const barColorsMuted = mayDaily.map(d => {
+    const wd = new Date(d.d).getDay();
+    if (wd === 5) return 'rgba(201,169,75,0.55)';            // Friday — gold, muted
+    if (wd === 0 || wd === 6) return 'rgba(242,160,136,0.55)'; // Weekend — coral, muted
+    return 'rgba(42,157,143,0.40)';                           // Mid-week — teal, muted
+  });
+
+  new Chart(document.getElementById('mayDailyChart'), {
+    data: {
+      labels: dayLabels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Daily target (secondary)',
+          data: mayDaily.map(d => d.ft),
+          backgroundColor: barColorsMuted,
+          borderRadius: 3,
+          borderSkipped: false,
+          yAxisID: 'y1',
+          order: 2
+        },
+        {
+          type: 'line',
+          label: 'Cumulative target — path to 19,850',
+          data: cumData,
+          borderColor: NAVY,
+          backgroundColor: 'rgba(31,56,100,0.18)',
+          tension: 0.25,
+          borderWidth: 4,
+          pointRadius: 4,
+          pointBackgroundColor: NAVY,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1.5,
+          pointHoverRadius: 7,
+          fill: true,
+          yAxisID: 'y',
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { padding: 12, usePointStyle: true, pointStyle: 'rectRounded' }
+        },
+        tooltip: {
+          callbacks: {
+            title: (items) => `May ${dayLabels[items[0].dataIndex]} (${dayWeekdays[items[0].dataIndex]})`,
+            label: (item) => {
+              if (item.dataset.type === 'line') {
+                const pct = (item.parsed.y / 19850 * 100).toFixed(1);
+                return `Cumulative: ${fmt(item.parsed.y)} FTDs (${pct}% of month)`;
+              }
+              return `Daily target: ${fmt(item.parsed.y)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, title: { display: true, text: 'Day of May' } },
+        y: {
+          position: 'left',
+          grid: { color: '#E2E8F0' },
+          title: { display: true, text: 'Cumulative FTDs (primary)', color: NAVY, font: { weight: '700' } },
+          ticks: { callback: v => fmt(v), color: NAVY, font: { weight: '600' } },
+          max: 21000
+        },
+        y1: {
+          position: 'right',
+          grid: { display: false },
+          title: { display: true, text: 'Daily FTDs (secondary)', color: '#94A3B8' },
+          ticks: { callback: v => fmt(v), color: '#94A3B8' },
+          max: 1600
+        }
+      }
+    }
+  });
+
+</script>
+
+</body>
+</html>
